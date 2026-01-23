@@ -5,10 +5,10 @@ use task_manager;
 
 -- 1. Create Tables
 -- 1.1. Users
-create table Users (
+create table users (
 user_id int auto_increment primary key,
 name varchar(150) not null,
-email varchar(250) not null unique,
+email varchar(255) not null unique,
 password varchar(255) not null, 
 created_at datetime default current_timestamp,
 updated_at datetime default current_timestamp on update current_timestamp,
@@ -16,10 +16,10 @@ is_active boolean default true
 );
 
 -- 1.2. Priorities
-create table Priorities (
+create table priorities (
 priority_id int auto_increment primary key,
 name varchar(50) not null unique,
-level int not null
+level int not null unique
 );
 
 -- 1.3. Tasks
@@ -28,69 +28,76 @@ task_id int auto_increment primary key,
 user_id int not null,
 title varchar(255) not null,
 description text,
-due_date datetime null,
-priority_id int,
+due_date date null,
+priority_id int not null,
 status enum('pending', 'in_progress','completed', 'archived') default 'pending',
+is_active boolean default true,
 created_at datetime default current_timestamp,
 updated_at datetime default current_timestamp on update current_timestamp,
-foreign key (user_id) references Users(user_id) on delete cascade,
-foreign key (priority_id) references Priorities(priority_id) on delete cascade,
-index idx_user (user_id), --
-index idx_priority (priority_id) --
+foreign key (user_id) references users(user_id) on delete cascade,
+foreign key (priority_id) references priorities(priority_id) on delete restrict,
+index idx_user (user_id),
+index idx_priority (priority_id),
+unique(user_id, title),
+index idx_user_status (user_id, status)
 );
 
 -- 1.4. Categories
-create table Categories(
+create table categories(
 category_id  int auto_increment primary key,
 user_id int not null,
-name varchar(100) not null unique,
+name varchar(100) not null,
 description text,
-foreign key (user_id) references Users(user_id) on delete cascade
+is_active boolean default true,
+foreign key (user_id) references users(user_id) on delete cascade,
+unique(user_id, name),
+index idx_user_category (user_id, name)
 );
 
 -- 1.5. Task_Categories (Junction Table)
-create table Task_Categories (
+create table task_categories (
 task_id int not null,
 category_id int not null,
 primary key (task_id, category_id),
-foreign key (task_id) references Tasks(task_id) on delete cascade,
-foreign key (category_id) references Categories(category_id) on delete cascade
+foreign key (task_id) references tasks(task_id) on delete cascade,
+foreign key (category_id) references categories(category_id) on delete cascade
 );
 
 -- 1.6. Task_History
-create table Task_History(
+create table task_history(
 history_id int auto_increment primary key,
 task_id int not null,
-changed_by int not null,
+changed_by int null,
 old_status enum('pending', 'in_progress','completed', 'archived') not null,
 new_status enum('pending', 'in_progress','completed', 'archived') not null,
 changed_at datetime default current_timestamp,
-remarks text,
-foreign key (task_id) references Tasks(task_id) on delete cascade,
-foreign key (changed_by) references Users(user_id) on delete set null
+foreign key (task_id) references tasks(task_id) on delete cascade,
+foreign key (changed_by) references users(user_id) on delete set null
 );
 
 -- 1.7. Password_Reset_Tokens
-create table Password_Reset_Tokens(
+create table password_reset_tokens(
 token_id int auto_increment primary key,
 user_id int not null,
 token varchar(255) not null unique,
 expires_at datetime not null,
 used boolean default false,
 created_at datetime default current_timestamp,
-foreign key (user_id) references Users(user_id) on delete cascade,
+foreign key (user_id) references users(user_id) on delete cascade,
 index idx_user_token (user_id, used)
 ); 
 
 -- 1.8. Comments
-create table Comments(
+create table comments(
 comment_id int auto_increment primary key,
-task_id int not null,
-user_id int not null,
+task_id int null,
+user_id int null,
 content text not null,
 created_at datetime default current_timestamp,
-foreign key (task_id) references Tasks(task_id) on delete cascade,
-foreign key (user_id) references Users(user_id) on delete cascade,
+updated_at datetime default current_timestamp on update current_timestamp,
+is_active boolean default true,
+foreign key (task_id) references tasks(task_id) on delete cascade,
+foreign key (user_id) references users(user_id) on delete cascade,
 index idx_task (task_id)
 );
 
@@ -101,43 +108,6 @@ insert into priorities (name, level) values
 ('medium', 2),
 ('low', 3);
 
--- Users
-insert into users (name, email, password) values
-('abdul qadir', 'aqs@example.com', '$hashed$1'),
-('royam ali', 'royam@example.com', '$hashed$2');
-
--- categories
-insert into categories (name, description, user_id) values
-('university work', 'work related tasks', 1),
-('personal', 'personal tasks', 1),
-('shopping', 'grocery and purchase tasks', 2),
-('fitness', 'health and exercise related tasks', 2);
-
--- tasks
-insert into tasks (user_id, title, description, due_date, priority_id, status) values
-(1, 'finish report', 'complete dbms report', '2025-11-01 23:59:00', 1, 'pending'),
-(1, 'study for lab', 'prepare sql examples', null, 2, 'in_progress'),
-(2, 'buy groceries', 'milk, eggs', '2025-12-2 18:00:00', 3, 'pending'),
-(2, 'morning workout', 'cardio and stretching', null, 2, 'pending');
-
--- task_categories
-insert into task_categories (task_id, category_id) values
-(1, 1), -- Abdul Qadir's task in "work"
-(2, 2), -- Abdul Qadir's task in "personal"
-(3, 3), -- royam's task in "shopping"
-(4, 4); -- royam's task in "fitness"
-
--- comments
-insert into comments (task_id, user_id, content) values
-(1, 1, 'started writing intro'),
-(1, 2, 'please add references'), -- Remove this comment
-(3, 2, 'remember to use discount coupons');
-
--- password reset tokens (sample)
-insert into password_reset_tokens (user_id, token, expires_at) values
-(1, 'abc123', date_add(now(), interval 1 hour)), -- Reset these values
-(2, 'xyz456', date_add(now(), interval 2 hour));
-select * from password_reset_tokens;
 
 -- 3. Creating views 
 -- 3.1) ActiveTasksView - To allow a user to view their pending/in-progress task
