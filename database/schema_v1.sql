@@ -108,29 +108,23 @@ insert into priorities (name, level) values
 ('medium', 2),
 ('low', 3);
 
-
 -- 3. Creating views 
 -- 3.1) ActiveTasksView - To allow a user to view their pending/in-progress task
-create view ActiveTasksView as 
+create view active_tasks_view as 
 select
    t.task_id,
    t.title,
    t.description,
    t.due_date,
    p.name as priority_name,
-   p.level as priority_level,
-   u.name as user_name,
-   t.status,
-   t.created_at
+   t.status
 from tasks t
-left join priorities p on t.priority_id = p.priority_id
-left join users u on t.user_id = u.user_id
+inner join users u on t.user_id = u.user_id
+inner join priorities p on t.priority_id = p.priority_id
 where t.status in ('pending', 'in_progress');
- -- To allow only to user to access/view their tasks
--- SELECT * FROM ActiveTasksView where user_id = 1;
 
 -- 3.2.UserCategoriesTasks
-create view usercategoriestasks as
+create view user_categories_tasks as
 select
     c.category_id,
     c.name as category_name,
@@ -139,49 +133,25 @@ select
     t.title as task_title,
     t.description as task_description,
     t.due_date,
-    t.status,
-    t.created_at as task_created_at,
-    t.updated_at as task_updated_at
+    t.status
 from categories c
 left join task_categories tc on c.category_id = tc.category_id
 left join tasks t on tc.task_id = t.task_id; 
--- To allow only to user to access/view their categories
--- replace ? with the logged-in user's id in your query
 
-
--- 3.3.  UserSpecificCategoryTasks - To allow a user to view their categories and its tasks
-create view userspecificcategoriestasks as
+-- 3.3. ViewComments
+create  view task_comments as
 select
-    c.category_id,
-    c.name as category_name,
-    c.description as category_description,
-    t.task_id,
-    t.title as task_title,
-    t.description as task_description,
-    t.due_date,
-    t.status,
-    t.created_at as task_created_at,
-    t.updated_at as task_updated_at
-from categories c
-left join task_categories tc on c.category_id = tc.category_id
-left join tasks t on tc.task_id = t.task_id; 
--- specific category id and user id to allow a user to view specific tasks;  
--- replace ? with the logged-in user's id in your query
-
--- 3.4. ViewCommnets
-create  view taskcomments as
-select
-t.title as task_title,
-t.description as task_description,
 c.comment_id,
 c.task_id,
-c.user_id as comment_author_id,
+t.title as task_title,
+t.description as task_description,
+u.user_id as comment_author_id,
 u.name as comment_author_name,
 c.content as comment_text,
 c.created_at as comment_created_at
 from comments c
-join users u on c.user_id = u.user_id
-join tasks t on c.task_id = t.task_id;
+inner join users u on c.user_id = u.user_id
+inner join tasks t on c.task_id = t.task_id;
 
 -- 4 Trigger: auto-insert into Task_History on status change
 DELIMITER $$
@@ -224,7 +194,6 @@ begin
   commit;
 end$$
 delimiter ;
--- CALL create_reset_token(1, 'NEW_TOKEN_ABC123');
 
 -- 6. Creating Stored Procedures
 -- 6.1. Stored procedure to add user
