@@ -198,7 +198,7 @@ delimiter ;
 -- 6. Creating Stored Procedures
 -- 6.1. Stored procedure to add user
 delimiter $$
-create procedure add_user(in in_name varchar(255), in in_email varchar(255), in in_password varchar(255))
+create procedure add_user(in in_name varchar(150), in in_email varchar(255), in in_password varchar(255))
 begin 
 
 declare exit handler for sqlexception
@@ -213,9 +213,26 @@ insert into users(name, email, password) values
 end $$
 delimiter ;
 
--- 6.2. Stored procedure to add task
+-- 6.2. Stored procedure to delete user
 delimiter $$
-create procedure add_task(in in_user_id int, in in_title varchar(255), in in_description text, in in_due_date datetime,
+
+create procedure delete_user(in in_user_id int)
+begin
+    declare exit handler for sqlexception
+    begin
+        -- re-throw the error if something goes wrong
+        resignal;
+    end;
+
+    delete from users
+    where user_id = in_user_id;
+end $$
+
+delimiter ;
+
+-- 6.3. Stored procedure to add task
+delimiter $$
+create procedure add_task(in in_user_id int, in in_title varchar(255), in in_description text, in in_due_date date,
 in in_priority_id int)
 begin
 
@@ -231,10 +248,10 @@ values (in_user_id, in_title, in_description, in_due_date, in_priority_id);
 end $$
 delimiter ;
 
--- 6.3. Stored procedure for updating a task
+-- 6.4. Stored procedure for updating a task
 delimiter $$
-create procedure update_task(in in_task_id int, in in_user_id int, in in_title varchar(255), in in_description text, in in_due_date datetime, in in_priority_id int,
-in in_status enum('pending','in_progress','completed','archived'))
+create procedure update_task(in in_task_id int, in in_user_id int, in in_title varchar(255), in in_description text, 
+in in_due_date date, in in_priority_id int, in in_status enum('pending','in_progress','completed','archived'))
 begin
 
 declare exit handler for sqlexception
@@ -255,7 +272,7 @@ end $$
 
 delimiter ;
 
--- 6.4. Stored procedure for deleting a task
+-- 6.5. Stored procedure for deleting a task
 delimiter $$
 create procedure delete_tasks(in in_task_id int, in in_user_id int )
 begin
@@ -273,7 +290,7 @@ end $$
 
 delimiter ;
 
--- 6.5. Stored procedure for creating a category
+-- 6.6. Stored procedure for creating a category
 delimiter $$
 create procedure add_category(in in_user_id int, in in_name varchar(100), in in_description text )
 begin
@@ -289,7 +306,7 @@ end $$
 
 delimiter ;
 
--- 6.6. Stored procedure for adding a task to a category
+-- 6.7. Stored procedure for adding a task to a category
 delimiter $$
 create procedure add_task_to_category(in in_task_id int, in in_category_id int, in in_user_id int )
 begin
@@ -310,7 +327,7 @@ end $$
 
 delimiter ;
 
--- 6.7. Stored procedure for removing task from category
+-- 6.8. Stored procedure for removing task from category
 delimiter $$
 create procedure remove_task_from_category(in in_task_id int, in in_category_id int, in in_user_id int )
 begin
@@ -332,7 +349,7 @@ and c.user_id = in_user_id;
 
 delimiter ;
 
--- 6.8. Stored procedure for deleting a category
+-- 6.9. Stored procedure for deleting a category
 delimiter $$
 create procedure delete_category(in in_category_id int, in in_user_id int)
 begin
@@ -350,9 +367,9 @@ end $$
 
 delimiter ;
 
--- 6.9. Stored Procedure for adding comments to task
+-- 6.10. Stored Procedure for adding comments to task
 delimiter $$
-create procedure add_commnet_to_task (in in_task_id int, in in_user_id int, in in_content text)
+create procedure add_comment_to_task (in in_task_id int, in in_user_id int, in in_content text)
 begin
 
 declare exit handler for sqlexception
@@ -371,9 +388,9 @@ end $$
 
 delimiter ;
 
--- 6.10. Stored Procedure to update comments 
+-- 6.11. Stored Procedure to update comments 
 delimiter $$
-create procedure update_commnet_to_task (in in_task_id int, in in_user_id int, in in_content text)
+create procedure update_comment_to_task (in in_task_id int, in in_user_id int, in_commnet_id int, in in_content text)
 begin
 
 declare exit handler for sqlexception
@@ -394,9 +411,9 @@ end $$
 
 delimiter ;
 
--- 6.11. Stored Procedure to delete comments
+-- 6.12. Stored Procedure to delete comments
 delimiter $$
-create procedure delete_commnet_to_task (in in_task_id int, in in_user_id int, in in_content text)
+create procedure delete_comment_to_task (in in_task_id int, in in_user_id int)
 begin
 
 declare exit handler for sqlexception
@@ -409,7 +426,7 @@ then signal sqlstate  '45000'
 set message_text = 'task does not belong to the user';
 end if;
 
-delete from commnets
+delete from comments
 where task_id = in_task_id and user_id = in_user_id;
 end $$
 
