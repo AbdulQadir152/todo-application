@@ -20,4 +20,8 @@ Currently focused on database design and refactoring. Backend and frontend will 
 <p>
 The database schema and ERD are available in the <code>database/</code> directory.
 </p>
+<p>
+    The ERD has been updated to reflect the latest refactored schema, including mandatory relationships, cascade rules, and ownership constraints. 
+    All tables, views, triggers, and stored procedures have been designed to support the current functionality of the Todo Application.
+</p>
 
